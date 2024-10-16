@@ -14,6 +14,12 @@ app.get('/', (_: Request, res: Response) => {
   })
 })
 
+app.get('/test', (_: Request, res: Response) => {
+  return res.status(200).json({
+    message: 'Server is up and running, webhooks processed on /webhook endpoint'
+  })
+})
+
 // Webhook route
 app.post('/webhook', async (req: Request, res: Response) => {
   const webhookData = req.body;
