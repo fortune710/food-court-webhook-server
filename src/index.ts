@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_: Request, res: Response) => {
   return res.status(200).json({
     message: 'Server is up and running, webhooks processed on /webhook endpoint'
   })
