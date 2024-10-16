@@ -18,8 +18,6 @@ app.get('/', (req: Request, res: Response) => {
 app.post('/webhook', async (req: Request, res: Response) => {
   const webhookData = req.body;
   const event: "charge.success" = req.body.event;
-  console.log('Received webhook data:', webhookData.data.metadata);
-
 
   try {
     switch(event) {
