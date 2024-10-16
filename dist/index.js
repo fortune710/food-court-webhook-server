@@ -14,38 +14,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
-const supabase_js_1 = require("@supabase/supabase-js");
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+const supabase_1 = require("./supabase");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
-// Supabase client initialization
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase URL or Key');
-}
-const supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey);
 // Middleware
 app.use(body_parser_1.default.json());
+app.get('/', (_, res) => {
+    return res.status(200).json({
+        message: 'Server is up and running, webhooks processed on /webhook endpoint'
+    });
+});
+app.get('/test', (_, res) => {
+    return res.status(200).json({
+        message: 'Server is up and running, webhooks processed on /webhook endpoint'
+    });
+});
 // Webhook route
 app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const webhookData = req.body;
-    console.log('Received webhook data:', webhookData);
-    // Process the webhook data here
-    // For example, you could insert the data into a Supabase table
+    const event = req.body.event;
     try {
-        const { data, error } = yield supabase
-            .from('webhook_logs')
-            .insert({ payload: webhookData });
-        if (error)
-            throw error;
-        console.log('Webhook data inserted:', data);
-        res.status(200).json({ message: 'Webhook received and processed successfully' });
+        switch (event) {
+            case "charge.success":
+                yield (0, supabase_1.createOrder)(webhookData.data.metadata);
+                return res.status(201).json({ message: 'Webhook received and processed successfully' });
+            default:
+                return res.status(200).json({ message: 'Webhook event not supported yet' });
+        }
     }
-    catch (error) {
-        console.error('Error processing webhook:', error);
-        res.status(500).json({ message: 'Error processing webhook' });
+    catch (e) {
+        return res.status(500).json({
+            error: e, message: "Internal Server Error"
+        });
     }
 }));
 // Start the server
