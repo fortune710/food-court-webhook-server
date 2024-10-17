@@ -10,14 +10,14 @@ function parseMetadata(data) {
             id: Number(item.id),
             menu_item_id: Number(item.menu_item_id),
             quantity: Number(item.quantity),
-            menu_items: Object.assign(Object.assign({}, item.menu_items), { price: Number(item.menu_items.price), description: item.menu_items.description || "" })
+            menu_item: Object.assign(Object.assign({}, item.menu_item), { price: Number(item.menu_item.price), description: item.menu_item.description || "" })
         }))
     };
 }
 function groupCartItemsByRestaurant(userCart) {
     const groupedOrders = {};
     userCart.cart.forEach((item) => {
-        const restaurantId = item.menu_items.resturant_id;
+        const restaurantId = item.menu_item.resturant_id;
         if (!groupedOrders[restaurantId]) {
             groupedOrders[restaurantId] = {
                 total_amount: 0,
@@ -29,9 +29,9 @@ function groupCartItemsByRestaurant(userCart) {
         }
         groupedOrders[restaurantId].order_items.push(item);
         // Calculate total amount if price is available
-        if (item.menu_items.price !== undefined) {
+        if (item.menu_item.price !== undefined) {
             groupedOrders[restaurantId].total_amount +=
-                (item.quantity * item.menu_items.price);
+                (item.quantity * item.menu_item.price);
         }
     });
     return Object.values(groupedOrders);
