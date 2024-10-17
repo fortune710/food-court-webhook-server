@@ -8,10 +8,10 @@ export function parseMetadata(data: any): Metadata {
             id: Number(item.id),
             menu_item_id: Number(item.menu_item_id),
             quantity: Number(item.quantity),
-            menu_items: {
-                ...item.menu_items,
-                price: Number(item.menu_items.price),
-                description: item.menu_items.description || "",
+            menu_item: {
+                ...item.menu_item,
+                price: Number(item.menu_item.price),
+                description: item.menu_item.description || "",
             }
         })) as CartItem[]
     }
@@ -22,7 +22,7 @@ export function groupCartItemsByRestaurant(userCart: Metadata): Order[] {
     const groupedOrders: { [key: number]: Order } = {};
   
     userCart.cart.forEach((item) => {
-      const restaurantId = item.menu_items.resturant_id;
+      const restaurantId = item.menu_item.resturant_id;
       if (!groupedOrders[restaurantId]) {
         groupedOrders[restaurantId] = {
           total_amount: 0,
@@ -36,9 +36,9 @@ export function groupCartItemsByRestaurant(userCart: Metadata): Order[] {
       groupedOrders[restaurantId].order_items.push(item);
   
       // Calculate total amount if price is available
-      if (item.menu_items.price !== undefined) {
+      if (item.menu_item.price !== undefined) {
         groupedOrders[restaurantId].total_amount +=
-          (item.quantity * item.menu_items.price);
+          (item.quantity * item.menu_item.price);
       }
     });
   

@@ -1,7 +1,7 @@
 export interface CartItem {
     id: number,
     menu_item_id: number,
-    menu_items: {
+    menu_item: {
         description: string|null,
         name: string,
         price: number,
