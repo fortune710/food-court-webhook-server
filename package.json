@@ -4,7 +4,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "git-push": "tsc && git push -u origin main"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.21.0",
