@@ -29,7 +29,7 @@ function createOrder(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const userCart = (0, utils_1.parseMetadata)(data);
         const orders = (0, utils_1.groupCartItemsByRestaurant)(userCart);
-        return yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
+        yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
             const { data } = yield supabase.from(types_1.SupabaseTables.Orders).upsert({
                 restaurant_id: order.restaurant_id,
                 total_amount: order.total_amount,
@@ -45,5 +45,8 @@ function createOrder(data) {
                 quantity: item.quantity,
             })));
         })));
+        return yield supabase.from(types_1.SupabaseTables.CartItems)
+            .delete()
+            .eq('user_id', data.user_id);
     });
 }

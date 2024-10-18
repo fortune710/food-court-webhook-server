@@ -27,5 +27,6 @@ export interface Order {
 
 export enum SupabaseTables {
     Orders = "orders",
-    OrderItems = "order_items"
+    OrderItems = "order_items",
+    CartItems = "cart_items"
 }

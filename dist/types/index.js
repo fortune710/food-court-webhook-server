@@ -5,4 +5,5 @@ var SupabaseTables;
 (function (SupabaseTables) {
     SupabaseTables["Orders"] = "orders";
     SupabaseTables["OrderItems"] = "order_items";
+    SupabaseTables["CartItems"] = "cart_items";
 })(SupabaseTables || (exports.SupabaseTables = SupabaseTables = {}));

@@ -21,7 +21,7 @@ export async function createOrder(data: Metadata) {
     const orders = groupCartItemsByRestaurant(userCart);
     
 
-    return await Promise.all(
+    await Promise.all(
         orders.map(async (order) => {
             const { data } = await supabase.from(SupabaseTables.Orders).upsert({
                 restaurant_id: order.restaurant_id,
@@ -47,6 +47,8 @@ export async function createOrder(data: Metadata) {
         })
     )
 
-    
+    return await supabase.from(SupabaseTables.CartItems)
+        .delete()
+        .eq('user_id', data.user_id)
 
 }
