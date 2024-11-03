@@ -34,6 +34,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
         return res.status(200).json({ message: 'Webhook event not supported yet' })
     }
   } catch (e) {
+    console.log(e)
     return res.status(500).json({
       error: e, message: "Internal Server Error"
     })

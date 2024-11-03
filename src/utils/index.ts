@@ -9,9 +9,9 @@ export function parseMetadata(data: any): Metadata {
             menu_item_id: Number(item.menu_item_id),
             quantity: Number(item.quantity),
             menu_item: {
-                ...item.menu_item,
-                price: Number(item.menu_item.price),
-                description: item.menu_item.description || "",
+              ...item.menu_item,
+              price: Number(item.menu_item?.price),
+              description: item.menu_item?.description || "",
             }
         })) as CartItem[]
     }

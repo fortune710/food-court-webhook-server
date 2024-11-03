@@ -2,6 +2,7 @@ import { Metadata, SupabaseTables } from "../types";
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { groupCartItemsByRestaurant, parseMetadata } from "../utils";
+import { addStaffToQueue, getNextStaff, restaurantExists } from "../redis/staff";
 
 dotenv.config();
 
@@ -44,6 +45,40 @@ async function getHighestPrepTime(menuItemIds: number[]) {
     }
 }
 
+async function getRestaurantStaff(restaurantId: number) {
+        
+  try {
+      const { data, error } = await supabase
+        .from('restaurant-staff')
+        .select('staff_id')
+        .eq('restaurant_id', restaurantId);
+        
+      if (error) return [];
+      
+      // Convert preparation times to minutes (numbers)
+      return data.map(({ staff_id }) => staff_id);
+      
+  } catch (error) {
+      return [];
+  }
+}
+
+async function isStaffOnline(staffId: string) {
+  try {
+    const { data, error } = await supabase.from('restaurant-staff')
+      .select("is_online")
+      .eq("staff_id", staffId)
+      .single()
+
+
+    if (error) return false;
+    return data.is_online;
+
+  } catch {
+    return false;
+  }
+}
+
 export async function createOrder(data: Metadata) {
     const userCart = parseMetadata(data);
     const orders = groupCartItemsByRestaurant(userCart);
@@ -53,6 +88,36 @@ export async function createOrder(data: Metadata) {
         orders.map(async (order) => {
             const menuItemIds = order.order_items.map((item) => item.menu_item_id!);
             const highestPrepTime = await getHighestPrepTime(menuItemIds);
+            console.log(highestPrepTime, "prep time")
+
+            const exists = await restaurantExists(order.restaurant_id);
+            console.log(exists, "exists")
+
+            if (!exists) {
+              const staff = await getRestaurantStaff(order.restaurant_id)!;
+              await addStaffToQueue(order.restaurant_id, staff)
+            }
+
+            let nextStaff: string | null = await getNextStaff(order.restaurant_id);
+            let iterationCount = 0;
+
+            console.log(nextStaff)
+
+            while (true) {
+              const isOnline = await isStaffOnline(nextStaff!);
+              console.log(isOnline, "online")
+
+              if (!isOnline) {
+                nextStaff = await getNextStaff(order.restaurant_id);
+                iterationCount += 1;
+                continue;
+              } else if (iterationCount >= 10) {
+                nextStaff = null;
+                break;
+              } else {
+                break;
+              }
+            }
 
             const { data } = await supabase.from(SupabaseTables.Orders).upsert({
                 restaurant_id: order.restaurant_id,
@@ -61,7 +126,8 @@ export async function createOrder(data: Metadata) {
                 user_paid: false,
                 customer_name: order.customer_name,
                 user_id: order.user_id,
-                preparation_time: highestPrepTime
+                preparation_time: highestPrepTime,
+                assigned_staff: nextStaff,
             }).select()
             const orderData = data![0] as {
                 id: number,
