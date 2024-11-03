@@ -17,6 +17,7 @@ const types_1 = require("../types");
 const supabase_js_1 = require("@supabase/supabase-js");
 const dotenv_1 = __importDefault(require("dotenv"));
 const utils_1 = require("../utils");
+const staff_1 = require("../redis/staff");
 dotenv_1.default.config();
 // Supabase client initialization
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -52,6 +53,39 @@ function getHighestPrepTime(menuItemIds) {
         }
     });
 }
+function getRestaurantStaff(restaurantId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const { data, error } = yield supabase
+                .from('restaurant-staff')
+                .select('staff_id')
+                .eq('restaurant_id', restaurantId);
+            if (error)
+                return [];
+            // Convert preparation times to minutes (numbers)
+            return data.map(({ staff_id }) => staff_id);
+        }
+        catch (error) {
+            return [];
+        }
+    });
+}
+function isStaffOnline(staffId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const { data, error } = yield supabase.from('restaurant-staff')
+                .select("is_online")
+                .eq("staff_id", staffId)
+                .single();
+            if (error)
+                return false;
+            return data.is_online;
+        }
+        catch (_a) {
+            return false;
+        }
+    });
+}
 function createOrder(data) {
     return __awaiter(this, void 0, void 0, function* () {
         const userCart = (0, utils_1.parseMetadata)(data);
@@ -59,6 +93,32 @@ function createOrder(data) {
         yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
             const menuItemIds = order.order_items.map((item) => item.menu_item_id);
             const highestPrepTime = yield getHighestPrepTime(menuItemIds);
+            console.log(highestPrepTime, "prep time");
+            const exists = yield (0, staff_1.restaurantExists)(order.restaurant_id);
+            console.log(exists, "exists");
+            if (!exists) {
+                const staff = yield getRestaurantStaff(order.restaurant_id);
+                yield (0, staff_1.addStaffToQueue)(order.restaurant_id, staff);
+            }
+            let nextStaff = yield (0, staff_1.getNextStaff)(order.restaurant_id);
+            let iterationCount = 0;
+            console.log(nextStaff);
+            while (true) {
+                const isOnline = yield isStaffOnline(nextStaff);
+                console.log(isOnline, "online");
+                if (!isOnline) {
+                    nextStaff = yield (0, staff_1.getNextStaff)(order.restaurant_id);
+                    iterationCount += 1;
+                    continue;
+                }
+                else if (iterationCount >= 10) {
+                    nextStaff = null;
+                    break;
+                }
+                else {
+                    break;
+                }
+            }
             const { data } = yield supabase.from(types_1.SupabaseTables.Orders).upsert({
                 restaurant_id: order.restaurant_id,
                 total_amount: order.total_amount,
@@ -66,7 +126,8 @@ function createOrder(data) {
                 user_paid: false,
                 customer_name: order.customer_name,
                 user_id: order.user_id,
-                preparation_time: highestPrepTime
+                preparation_time: highestPrepTime,
+                assigned_staff: nextStaff,
             }).select();
             const orderData = data[0];
             yield supabase.from(types_1.SupabaseTables.OrderItems).insert(order.order_items.map((item) => ({

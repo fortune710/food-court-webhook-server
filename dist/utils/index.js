@@ -6,12 +6,15 @@ function parseMetadata(data) {
     return {
         user_id: data.user_id,
         customer_name: data.customer_name,
-        cart: data.cart.map((item) => ({
-            id: Number(item.id),
-            menu_item_id: Number(item.menu_item_id),
-            quantity: Number(item.quantity),
-            menu_item: Object.assign(Object.assign({}, item.menu_item), { price: Number(item.menu_item.price), description: item.menu_item.description || "" })
-        }))
+        cart: data.cart.map((item) => {
+            var _a, _b;
+            return ({
+                id: Number(item.id),
+                menu_item_id: Number(item.menu_item_id),
+                quantity: Number(item.quantity),
+                menu_item: Object.assign(Object.assign({}, item.menu_item), { price: Number((_a = item.menu_item) === null || _a === void 0 ? void 0 : _a.price), description: ((_b = item.menu_item) === null || _b === void 0 ? void 0 : _b.description) || "" })
+            });
+        })
     };
 }
 function groupCartItemsByRestaurant(userCart) {

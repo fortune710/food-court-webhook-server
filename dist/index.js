@@ -43,6 +43,7 @@ app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
     }
     catch (e) {
+        console.log(e);
         return res.status(500).json({
             error: e, message: "Internal Server Error"
         });
