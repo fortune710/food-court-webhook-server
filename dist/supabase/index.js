@@ -134,6 +134,8 @@ function createOrder(data) {
                 order_id: orderData.id,
                 menu_item_id: item.menu_item_id,
                 quantity: item.quantity,
+                addon_name: item === null || item === void 0 ? void 0 : item.addon_name,
+                addon_price: item === null || item === void 0 ? void 0 : item.addon_price,
             })));
         })));
         return yield supabase.from(types_1.SupabaseTables.CartItems)

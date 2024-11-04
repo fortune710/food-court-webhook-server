@@ -1,6 +1,8 @@
 export interface CartItem {
     id: number,
     menu_item_id: number,
+    addon_name?: string,
+    addon_price?: number,
     menu_item: {
         description: string|null,
         name: string,

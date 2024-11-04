@@ -120,26 +120,28 @@ export async function createOrder(data: Metadata) {
             }
 
             const { data } = await supabase.from(SupabaseTables.Orders).upsert({
-                restaurant_id: order.restaurant_id,
-                total_amount: order.total_amount,
-                notes: "",
-                user_paid: false,
-                customer_name: order.customer_name,
-                user_id: order.user_id,
-                preparation_time: highestPrepTime,
-                assigned_staff: nextStaff,
+              restaurant_id: order.restaurant_id,
+              total_amount: order.total_amount,
+              notes: "",
+              user_paid: false,
+              customer_name: order.customer_name,
+              user_id: order.user_id,
+              preparation_time: highestPrepTime,
+              assigned_staff: nextStaff,
             }).select()
             const orderData = data![0] as {
-                id: number,
-                total_amount: number,
-                restaurant_id: number,
+              id: number,
+              total_amount: number,
+              restaurant_id: number,
             }
             
             await supabase.from(SupabaseTables.OrderItems).insert(
                 order.order_items.map((item) => ({
-                    order_id: orderData.id,
-                    menu_item_id: item.menu_item_id,
-                    quantity: item.quantity,
+                  order_id: orderData.id,
+                  menu_item_id: item.menu_item_id,
+                  quantity: item.quantity,
+                  addon_name: item?.addon_name,
+                  addon_price: item?.addon_price,
                 }))
             )
         })

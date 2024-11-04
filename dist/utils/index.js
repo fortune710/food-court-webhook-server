@@ -12,7 +12,9 @@ function parseMetadata(data) {
                 id: Number(item.id),
                 menu_item_id: Number(item.menu_item_id),
                 quantity: Number(item.quantity),
-                menu_item: Object.assign(Object.assign({}, item.menu_item), { price: Number((_a = item.menu_item) === null || _a === void 0 ? void 0 : _a.price), description: ((_b = item.menu_item) === null || _b === void 0 ? void 0 : _b.description) || "" })
+                menu_item: Object.assign(Object.assign({}, item.menu_item), { price: Number((_a = item.menu_item) === null || _a === void 0 ? void 0 : _a.price), description: ((_b = item.menu_item) === null || _b === void 0 ? void 0 : _b.description) || "" }),
+                addon_name: (item === null || item === void 0 ? void 0 : item.addon_name) || "",
+                addon_price: (item === null || item === void 0 ? void 0 : item.addon_price) || 0,
             });
         })
     };

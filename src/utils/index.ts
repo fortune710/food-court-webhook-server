@@ -5,14 +5,17 @@ export function parseMetadata(data: any): Metadata {
         user_id: data.user_id,
         customer_name: data.customer_name,
         cart: data.cart.map((item: CartItem) => ({
-            id: Number(item.id),
-            menu_item_id: Number(item.menu_item_id),
-            quantity: Number(item.quantity),
-            menu_item: {
-              ...item.menu_item,
-              price: Number(item.menu_item?.price),
-              description: item.menu_item?.description || "",
-            }
+          id: Number(item.id),
+          menu_item_id: Number(item.menu_item_id),
+          quantity: Number(item.quantity),
+          menu_item: {
+            ...item.menu_item,
+            price: Number(item.menu_item?.price),
+            description: item.menu_item?.description || "",
+          },
+          addon_name: item?.addon_name || "",
+          addon_price: item?.addon_price || 0,
+          
         })) as CartItem[]
     }
 }
