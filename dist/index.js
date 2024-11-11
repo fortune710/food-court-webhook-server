@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const supabase_1 = require("./supabase");
+const flags_1 = require("./flags");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 // Middleware
@@ -29,6 +30,22 @@ app.get('/test', (_, res) => {
         message: 'Server is up and running, webhooks processed on /webhook endpoint'
     });
 });
+app.get('/flag', (_, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const flagOn = yield (0, flags_1.getFeatureFlag)();
+        console.log(flagOn);
+        return res.status(200).json({
+            message: 'Feature flag gotten',
+            data: flagOn
+        });
+    }
+    catch (_a) {
+        return res.status(200).json({
+            message: 'Feature flag not gotten',
+            data: false
+        });
+    }
+}));
 // Webhook route
 app.post('/webhook', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const webhookData = req.body;
