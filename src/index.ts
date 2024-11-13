@@ -1,7 +1,10 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import { createOrder } from './supabase';
+import { createOrder, getCustomerEmailFromDB } from './supabase';
 import { getFeatureFlag } from './flags';
+import { sendEmailNotifcation } from './mail/send';
+import { SupabaseWebhookPayload } from './types';
+import { getCustomerEmail, setCustomerEmail } from './redis/customer-email';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,10 +24,35 @@ app.get('/test', (_: Request, res: Response) => {
   })
 })
 
+app.post('/mail', async (req: Request, res: Response) => {
+  const data: SupabaseWebhookPayload = req.body;
+  let customerEmail = await getCustomerEmail(data.record.user_id);
+
+  if (!customerEmail) {
+    customerEmail = await getCustomerEmailFromDB(data.record.user_id);
+    await setCustomerEmail(data.record.user_id, customerEmail!);
+  }
+
+  switch (data.type) {
+    case "UPDATE":
+      await sendEmailNotifcation(0, data.record.customer_name, customerEmail!)
+      break;
+
+    case "INSERT":
+      await sendEmailNotifcation(0, data.record.customer_name, customerEmail!)
+      break;
+
+    default:
+      break;
+  }
+  return res.status(200).json({
+    message: 'Server is up and running, webhooks processed on /webhook endpoint'
+  })
+})
+
 app.get('/flag', async (_: Request, res: Response) => {
   try {
     const flagOn = await getFeatureFlag();
-    console.log(flagOn)
   
     return res.status(200).json({
       message: 'Feature flag gotten',
@@ -57,8 +85,6 @@ app.post('/webhook', async (req: Request, res: Response) => {
       error: e, message: "Internal Server Error"
     })
   }
-
-
 });
 
 // Start the server

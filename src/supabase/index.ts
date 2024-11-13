@@ -148,7 +148,12 @@ export async function createOrder(data: Metadata) {
     )
 
     return await supabase.from(SupabaseTables.CartItems)
-        .delete()
-        .eq('user_id', data.user_id)
+      .delete()
+      .eq('user_id', data.user_id)
 
+}
+
+export async function getCustomerEmailFromDB(userId: string) {
+  const { data } = await supabase.from("profiles").select("email").eq("id", userId).single();
+  return data?.email
 }

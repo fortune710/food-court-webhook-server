@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createOrder = createOrder;
+exports.getCustomerEmailFromDB = getCustomerEmailFromDB;
 const types_1 = require("../types");
 const supabase_js_1 = require("@supabase/supabase-js");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -141,5 +142,11 @@ function createOrder(data) {
         return yield supabase.from(types_1.SupabaseTables.CartItems)
             .delete()
             .eq('user_id', data.user_id);
+    });
+}
+function getCustomerEmailFromDB(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data } = yield supabase.from("profiles").select("email").eq("id", userId).single();
+        return data === null || data === void 0 ? void 0 : data.email;
     });
 }

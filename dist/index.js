@@ -16,6 +16,8 @@ const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const supabase_1 = require("./supabase");
 const flags_1 = require("./flags");
+const send_1 = require("./mail/send");
+const customer_email_1 = require("./redis/customer-email");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 // Middleware
@@ -30,10 +32,30 @@ app.get('/test', (_, res) => {
         message: 'Server is up and running, webhooks processed on /webhook endpoint'
     });
 });
+app.post('/mail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = req.body;
+    let customerEmail = yield (0, customer_email_1.getCustomerEmail)(data.record.user_id);
+    if (!customerEmail) {
+        customerEmail = yield (0, supabase_1.getCustomerEmailFromDB)(data.record.user_id);
+        yield (0, customer_email_1.setCustomerEmail)(data.record.user_id, customerEmail);
+    }
+    switch (data.type) {
+        case "UPDATE":
+            yield (0, send_1.sendEmailNotifcation)(0, data.record.customer_name, customerEmail);
+            break;
+        case "INSERT":
+            yield (0, send_1.sendEmailNotifcation)(0, data.record.customer_name, customerEmail);
+            break;
+        default:
+            break;
+    }
+    return res.status(200).json({
+        message: 'Server is up and running, webhooks processed on /webhook endpoint'
+    });
+}));
 app.get('/flag', (_, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const flagOn = yield (0, flags_1.getFeatureFlag)();
-        console.log(flagOn);
         return res.status(200).json({
             message: 'Feature flag gotten',
             data: flagOn
