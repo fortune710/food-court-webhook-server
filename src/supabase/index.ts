@@ -88,10 +88,8 @@ export async function createOrder(data: Metadata) {
         orders.map(async (order) => {
             const menuItemIds = order.order_items.map((item) => item.menu_item_id!);
             const highestPrepTime = await getHighestPrepTime(menuItemIds);
-            console.log(highestPrepTime, "prep time")
 
             const exists = await restaurantExists(order.restaurant_id);
-            console.log(exists, "exists")
 
             if (!exists) {
               const staff = await getRestaurantStaff(order.restaurant_id)!;
@@ -102,7 +100,9 @@ export async function createOrder(data: Metadata) {
             let iterationCount = 0;
 
             console.log(nextStaff)
+            
 
+            //while loop will repeatedly attempt to get an availale staff for 10 iterations 
             while (true) {
               const isOnline = await isStaffOnline(nextStaff!);
               console.log(isOnline, "online")
@@ -144,12 +144,35 @@ export async function createOrder(data: Metadata) {
                   addon_price: item?.addon_price,
                 }))
             )
+
+            
         })
     )
 
-    return await supabase.from(SupabaseTables.CartItems)
-      .delete()
-      .eq('user_id', data.user_id)
+    const menuItemIds = orders.map((order) => {
+      return order.order_items.map((item) => item.menu_item_id)
+    }).flat()
+
+    const { data: menuItem } = await supabase.from(SupabaseTables.MenuItems)
+      .select('id, quantity')
+      .in('id', menuItemIds)
+      
+    const stockUpdatePromises = menuItem?.map(async (item) => {
+      await supabase.from(SupabaseTables.MenuItems)
+      .update({ quantity: item.quantity - 1 })
+      .eq('id', item.id)
+
+      return true
+    })
+
+
+    return await Promise.all([
+      await supabase.from(SupabaseTables.CartItems)
+        .delete()
+        .eq('user_id', data.user_id),
+      await Promise.all(stockUpdatePromises!)
+    ])
+    
 
 }
 

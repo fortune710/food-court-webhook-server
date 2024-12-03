@@ -94,9 +94,7 @@ function createOrder(data) {
         yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
             const menuItemIds = order.order_items.map((item) => item.menu_item_id);
             const highestPrepTime = yield getHighestPrepTime(menuItemIds);
-            console.log(highestPrepTime, "prep time");
             const exists = yield (0, staff_1.restaurantExists)(order.restaurant_id);
-            console.log(exists, "exists");
             if (!exists) {
                 const staff = yield getRestaurantStaff(order.restaurant_id);
                 yield (0, staff_1.addStaffToQueue)(order.restaurant_id, staff);
@@ -104,6 +102,7 @@ function createOrder(data) {
             let nextStaff = yield (0, staff_1.getNextStaff)(order.restaurant_id);
             let iterationCount = 0;
             console.log(nextStaff);
+            //while loop will repeatedly attempt to get an availale staff for 10 iterations 
             while (true) {
                 const isOnline = yield isStaffOnline(nextStaff);
                 console.log(isOnline, "online");
@@ -139,9 +138,24 @@ function createOrder(data) {
                 addon_price: item === null || item === void 0 ? void 0 : item.addon_price,
             })));
         })));
-        return yield supabase.from(types_1.SupabaseTables.CartItems)
-            .delete()
-            .eq('user_id', data.user_id);
+        const menuItemIds = orders.map((order) => {
+            return order.order_items.map((item) => item.menu_item_id);
+        }).flat();
+        const { data: menuItem } = yield supabase.from(types_1.SupabaseTables.MenuItems)
+            .select('id, quantity')
+            .in('id', menuItemIds);
+        const stockUpdatePromises = menuItem === null || menuItem === void 0 ? void 0 : menuItem.map((item) => __awaiter(this, void 0, void 0, function* () {
+            yield supabase.from(types_1.SupabaseTables.MenuItems)
+                .update({ quantity: item.quantity - 1 })
+                .eq('id', item.id);
+            return true;
+        }));
+        return yield Promise.all([
+            yield supabase.from(types_1.SupabaseTables.CartItems)
+                .delete()
+                .eq('user_id', data.user_id),
+            yield Promise.all(stockUpdatePromises)
+        ]);
     });
 }
 function getCustomerEmailFromDB(userId) {

@@ -39,5 +39,6 @@ export interface SupabaseWebhookPayload {
 export enum SupabaseTables {
     Orders = "orders",
     OrderItems = "order_items",
-    CartItems = "cart_items"
+    CartItems = "cart_items",
+    MenuItems = "menu_items"
 }
