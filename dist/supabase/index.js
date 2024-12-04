@@ -14,6 +14,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createOrder = createOrder;
 exports.getCustomerEmailFromDB = getCustomerEmailFromDB;
+exports.getNotificationToken = getNotificationToken;
+exports.checkNotificationTokenExists = checkNotificationTokenExists;
+exports.createNotificationToken = createNotificationToken;
+exports.updateNotificationToken = updateNotificationToken;
 const types_1 = require("../types");
 const supabase_js_1 = require("@supabase/supabase-js");
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -162,5 +166,54 @@ function getCustomerEmailFromDB(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data } = yield supabase.from("profiles").select("email").eq("id", userId).single();
         return data === null || data === void 0 ? void 0 : data.email;
+    });
+}
+function getNotificationToken(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data: token, error } = yield supabase.from(types_1.SupabaseTables.NotificationTokens)
+            .select("*").eq("user_id", userId).single();
+        if (error)
+            throw new Error(error.message);
+        return token;
+    });
+}
+function checkNotificationTokenExists(userId, newToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data: token, error } = yield supabase.from(types_1.SupabaseTables.NotificationTokens)
+            .select("*").eq("user_id", userId).single();
+        if (error)
+            return { exists: false, changed: false };
+        if (token.expo !== newToken)
+            return { exists: true, changed: true };
+        return { exists: true, changed: false };
+    });
+}
+function createNotificationToken(userId, notificationToken, platform) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { error } = yield supabase.from(types_1.SupabaseTables.NotificationTokens)
+            .upsert({
+            user_id: userId,
+            expo: notificationToken,
+            apn: platform === "ios" ? notificationToken : null,
+            fcm: platform !== "ios" ? notificationToken : null
+        });
+        if (error)
+            throw new Error(error.message);
+        return;
+    });
+}
+function updateNotificationToken(userId, notificationToken, platform) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { error } = yield supabase.from(types_1.SupabaseTables.NotificationTokens)
+            .update({
+            user_id: userId,
+            expo: notificationToken,
+            apn: platform === "ios" ? notificationToken : null,
+            fcm: platform !== "ios" ? notificationToken : null
+        })
+            .eq("user_id", userId);
+        if (error)
+            throw new Error(error.message);
+        return;
     });
 }

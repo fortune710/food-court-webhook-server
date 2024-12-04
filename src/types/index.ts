@@ -28,17 +28,20 @@ export interface Order {
 
 export interface SupabaseWebhookPayload {
     type: "INSERT" | "UPDATE",
-    record: {
-        user_id: string,
-        customer_name: string,
-        status: number,
-    },
+    record: any,
 }
 
+export interface WebhookOrderInformation {
+    user_id: string,
+    customer_name: string,
+    status: number,
+    assigned_staff: string
+}
 
 export enum SupabaseTables {
     Orders = "orders",
     OrderItems = "order_items",
     CartItems = "cart_items",
-    MenuItems = "menu_items"
+    MenuItems = "menu_items",
+    NotificationTokens = "notification-tokens"
 }

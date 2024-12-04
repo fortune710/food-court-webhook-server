@@ -18,6 +18,7 @@ const supabase_1 = require("./supabase");
 const flags_1 = require("./flags");
 const send_1 = require("./mail/send");
 const customer_email_1 = require("./redis/customer-email");
+const notifications_1 = require("./notifications");
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3000;
 // Middleware
@@ -34,17 +35,18 @@ app.get('/test', (_, res) => {
 });
 app.post('/mail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = req.body;
-    let customerEmail = yield (0, customer_email_1.getCustomerEmail)(data.record.user_id);
+    const record = data.record;
+    let customerEmail = yield (0, customer_email_1.getCustomerEmail)(record.user_id);
     if (!customerEmail) {
-        customerEmail = yield (0, supabase_1.getCustomerEmailFromDB)(data.record.user_id);
-        yield (0, customer_email_1.setCustomerEmail)(data.record.user_id, customerEmail);
+        customerEmail = yield (0, supabase_1.getCustomerEmailFromDB)(record.user_id);
+        yield (0, customer_email_1.setCustomerEmail)(record.user_id, customerEmail);
     }
     switch (data.type) {
         case "UPDATE":
-            yield (0, send_1.sendEmailNotifcation)(0, data.record.customer_name, customerEmail);
+            yield (0, send_1.sendEmailNotifcation)(0, record.customer_name, customerEmail);
             break;
         case "INSERT":
-            yield (0, send_1.sendEmailNotifcation)(0, data.record.customer_name, customerEmail);
+            yield (0, send_1.sendEmailNotifcation)(0, record.customer_name, customerEmail);
             break;
         default:
             break;
@@ -65,6 +67,53 @@ app.get('/flag', (_, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(200).json({
             message: 'Feature flag not gotten',
             data: false
+        });
+    }
+}));
+app.post('/notifications/order', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const payload = req.body;
+    const record = payload.record;
+    try {
+        const recipient = record.assigned_staff;
+        const title = "New Order Placed";
+        const body = `${record.customer_name} just placed an order. Respond to it now!`;
+        yield (0, notifications_1.sendNotification)(recipient, title, body, {});
+        return res.status(200).json({
+            data: null,
+            success: true,
+            message: "Notifications sent successfully"
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            data: null,
+            success: false,
+            message: error.message || "Notifications could not be sent"
+        });
+    }
+}));
+app.post('/device/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { token, userId, platform } = req.body;
+    if (!token || !userId || !platform) {
+        return res.status(400).json({
+            data: null,
+            message: "token, userId, or platform is missing from request body",
+            success: false
+        });
+    }
+    try {
+        yield (0, notifications_1.registerDevice)(token, userId, platform);
+        return res.status(500).json({
+            data: null,
+            message: "Device registered successfully",
+            success: true
+        });
+    }
+    catch (err) {
+        return res.status(500).json({
+            data: null,
+            message: err.message,
+            success: false
         });
     }
 }));
